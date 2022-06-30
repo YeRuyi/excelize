@@ -1536,7 +1536,19 @@ func (f *File) rangeResolver(cellRefs, cellRanges *list.List) (arg formulaArg, e
 		if cell, err = CoordinatesToCellName(cr.Col, cr.Row); err != nil {
 			return
 		}
-		if arg.String, err = f.GetCellValue(cr.Sheet, cell, Options{RawCellValue: true}); err != nil {
+		// 如果本单元格有公式则算公式值
+		formula, err2 := f.GetCellFormula(cr.Sheet, cell)
+		if err2 != nil {
+			return
+		}
+		if len(formula) > 0 {
+			// 计算公式
+			var err3 error
+			arg.String, err3 = f.CalcCellValue(cr.Sheet, cell)
+			if err3 != nil {
+				return
+			}
+		} else if arg.String, err = f.GetCellValue(cr.Sheet, cell, Options{RawCellValue: true}); err != nil {
 			return
 		}
 		arg.Type = ArgString
